@@ -1,5 +1,6 @@
 const express=require('express');
 const app=express();
+const jwt=require('jsonwebtoken')
 
 
 app.use(express.json())
@@ -25,7 +26,14 @@ app.post('/api/login',(req,res)=>{
         return u.userName === userName && password === u.password
     })
     if(userDetails){
-        res.json(userDetails)
+        //Generate an access token
+        const accessToken=jwt.sign({id:userDetails.id,isAdmin:userDetails.isAdmin},"mySecretKey");
+
+        res.json({
+            userName:userDetails.userName,
+            isAdmin:userDetails.isAdmin,
+            accessToken
+        })
     }else{
         res.status(400).json("user anem or passowrd is incorrect")
     }
