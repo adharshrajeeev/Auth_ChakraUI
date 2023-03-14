@@ -1,9 +1,14 @@
 const express=require('express');
 const app=express();
 const jwt=require('jsonwebtoken')
+const cors=require('cors')
 
 
+app.use(cors())
 app.use(express.json())
+
+
+
 
 const users=[
     {
@@ -88,5 +93,53 @@ app.delete('/api/users/:userId',verify,(req,res)=>{
         res.status(403).json("You are anot allowed to delete the user")
     }
 })
+
+//SO AUTHORIZATIOIN HEADER CONTAINS
+// authorization: bearer token
+
+
+
+const verifyToken=(req,res,next)=>{
+    const authHeader=req.headers.authorization
+    if(authHeader==undefined){
+        return res.status(401).json({error:"User not authenticated"})
+    }
+    let token=authHeader.split(" ").pop();
+    jwt.verify(token,"secretKey123",(err,decoded)=>{
+        if(err){
+           return res.status(500).json({error:"Authentication faild"})
+        }
+        req.decoded=decoded
+        next();
+        
+    })
+    
+
+}
+app.post('/api/login',(req,res)=>{
+    let {userName,password}=req.body;
+    const userDetails=users.find((user)=>{
+        return userName === user.userName && password === user.password;
+    })
+    if(!userDetails){
+        return res.status(401).json("No User Found")
+    }
+    let token=jwt.sign(userDetails,"secretKey123",{
+        expiresIn:"1d"
+    })
+    res.status(200).json({auth:true,token})
+})
+
+
+app.get('/api/books',verifyToken,(req,res)=>{
+    const value=req.decoded;
+    res.status(200).json({sucess:"YES U R AUTHENTICATED",decoded:value})
+})
+
+app.get('/',(req,res)=>{
+    res.sendFile(__dirname + '/index.html')
+})
+
+
 
 app.listen(5000,()=>{console.log("Backend server is running")})
