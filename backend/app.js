@@ -20,6 +20,20 @@ const users=[
     }
 ]
 
+
+const generateAccessToken=(userDetails)=>{
+  return jwt.sign({id:userDetails.id,isAdmin:userDetails.isAdmin},"mySecretKey",{
+        expiresIn:"15m"
+    });
+}
+
+const generateRefreshToken=(userDetails)=>{
+   return jwt.sign({id:userDetails.id,isAdmin:userDetails.isAdmin},"myRefreshKey",{
+        expiresIn:"15m"
+    });
+
+}
+
 app.post('/api/login',(req,res)=>{
     const {userName,password} = req.body;
    const userDetails= users.find(u=>{
@@ -27,8 +41,8 @@ app.post('/api/login',(req,res)=>{
     })
     if(userDetails){
       //Generate an access token
-        const accessToken=jwt.sign({id:userDetails.id,isAdmin:userDetails.isAdmin},"mySecretKey");
-
+        generateAccessToken(userDetails)
+        generateRefreshToken(userDetails)
         res.json({
             userName:userDetails.userName,
             isAdmin:userDetails.isAdmin,
@@ -37,6 +51,18 @@ app.post('/api/login',(req,res)=>{
     }else{
         res.status(400).json("user name  or passowrd is incorrect")
     }
+})
+
+let refreshTokens = []
+
+app.post('/api/refresh',(req,res)=>{
+    //take token from user
+    const refreshtoken=req.body.token
+    //send error if there is no token or token is not valid
+    if(!refreshtoken){
+        return res.status(401).json("You are not autheticated");
+    }
+    //if everything is okay create a accesstoken,refresh token and send to user
 })
 
 const verify=(req,res,next)=>{
