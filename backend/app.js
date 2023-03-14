@@ -26,7 +26,7 @@ app.post('/api/login',(req,res)=>{
         return u.userName === userName && password === u.password
     })
     if(userDetails){
-        //Generate an access token
+      //Generate an access token
         const accessToken=jwt.sign({id:userDetails.id,isAdmin:userDetails.isAdmin},"mySecretKey");
 
         res.json({
@@ -35,7 +35,31 @@ app.post('/api/login',(req,res)=>{
             accessToken
         })
     }else{
-        res.status(400).json("user anem or passowrd is incorrect")
+        res.status(400).json("user name  or passowrd is incorrect")
+    }
+})
+
+const verify=(req,res,next)=>{
+    const authHeader=req.headers.authorization;
+    if(authHeader){
+        const token=authHeader.split(" ")[1];
+        jwt.verify(token,"mySecretKey",(err,user)=>{
+            if(err){
+                return res.status(403).json("Token is not valid")
+            }
+            req.user=user;
+            next();
+        })  
+    }else{
+        res.status(401).json("You are not authenticated")
+    }
+}
+
+app.delete('/api/users/:userId',verify,(req,res)=>{
+    if(req.user.id === req.params.userId || req.user.isAdmin){
+        res.status(200).json("User has been deleted")
+    }else{
+        res.status(403).json("You are anot allowed to delete the user")
     }
 })
 
